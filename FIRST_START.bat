@@ -24,8 +24,7 @@ echo [5/6] Instaluje Django...
 pip install django
 
 echo.
-echo [6/6] Instaluje zaleznosci...
-pip install -r requirements.txt
+echo [6/6] Instaluje biblioteki...
 pip install djangorestframework
 pip install django-cors-headers
 
@@ -34,7 +33,7 @@ echo.
 echo ===============================
 echo GOTOWE
 echo Aby uruchomic:
-echo   otworz plik start.ps1 przez powershell
+echo   Otworz plik start.bat
 echo ===============================
 
 pause

@@ -1,4 +1,4 @@
-1. Najpierw należy uruchomić FIRST_START.bat aby zainstalować środowisko  wszystkie zależności.
+1. Najpierw należy uruchomić FIRST_START.bat aby zainstalować środowisko  wszystkie biblioteki.
 
 2. Następnie można przejść do pliku start.bat który uruchamia server i otwiera aplikację w przeglądarce.
 
