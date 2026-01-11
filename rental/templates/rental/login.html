@@ -1,0 +1,30 @@
+{% extends 'rental/base.html' %}
+{% block title %}Logowanie - Wypożyczalnia
+{% endblock %} {% block content %}
+<h1>Logowanie</h1>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  <label for="username">Nazwa użytkownika:</label>
+  <input type="text" id="username" name="username" required />
+
+  <label for="password">Hasło:</label>
+  <input type="password" id="password" name="password" required />
+
+  <button type="submit">Zaloguj się</button>
+</form>
+
+<p>Nie masz konta? <button type="button" class="btn" onclick="window.location.href='{% url 'register' %}'">
+    Zarejestruj się tutaj
+  </button></p>
+
+<style>
+  .btn {
+    margin-top: 1rem;
+  }
+</style>
+{% endblock %}

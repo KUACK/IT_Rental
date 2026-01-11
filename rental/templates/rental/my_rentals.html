@@ -1,0 +1,132 @@
+{% extends 'rental/base.html' %} {% block title %}Moje Wynajęcia -Wypożyczalnia
+{% endblock %} {% block content %}
+<h1>📋 Moje Wynajęcia</h1>
+
+<a href="{% url 'new_rental' %}" class="btn btn-success">+ Nowe Wynajęcie</a>
+
+<h2 style="margin-top: 2rem">📅 Zaplanowane Wynajęcia</h2>
+{% if planned_rentals %}
+<table>
+  <thead>
+    <tr>
+      <th>Sprzęt</th>
+      <th>Data wynajmu</th>
+      <th>Data zwrotu</th>
+      <th>Status</th>
+      <th>Akcja</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rental in planned_rentals %}
+    <tr>
+      <td>{{ rental.equipment.name }}</td>
+      <td>{{ rental.rental_date|date:"d.m.Y" }}</td>
+      <td>{{ rental.return_date|date:"d.m.Y" }}</td>
+      <td><span class="status-active">📅 Zaplanowane</span></td>
+      <td>
+        <a href="{% url 'cancel_rental' rental.id %}" class="btn btn-danger"
+          onclick="return confirm('Czy na pewno chcesz anulować to zaplanowane wynajęcie?');">
+          Anuluj
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Brak zaplanowanych wynajęć.</p>
+{% endif %}
+
+<h2 style="margin-top: 2rem">🔄 Aktywne Wynajęcia</h2>
+{% if active_rentals %}
+<table>
+  <thead>
+    <tr>
+      <th>Sprzęt</th>
+      <th>Data wynajmu</th>
+      <th>Data zwrotu</th>
+      <th>Status</th>
+      <th>Akcja</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rental in active_rentals %}
+    <tr>
+      <td>{{ rental.equipment.name }}</td>
+      <td>{{ rental.rental_date|date:"d.m.Y" }}</td>
+      <td>{{ rental.return_date|date:"d.m.Y" }}</td>
+      <td><span class="status-active">✅ Aktywne</span></td>
+      <td>
+        <a href="{% url 'cancel_rental' rental.id %}" class="btn btn-danger"
+          onclick="return confirm('Czy na pewno chcesz anulować to wynajęcie?');">Anuluj</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Brak aktywnych wynajęć.</p>
+{% endif %}
+
+<h2 style="margin-top: 2rem">✅ Ukończone Wynajęcia</h2>
+{% if completed_rentals %}
+<table>
+  <thead>
+    <tr>
+      <th>Sprzęt</th>
+      <th>Data wynajmu</th>
+      <th>Data zwrotu</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rental in completed_rentals %}
+    <tr>
+      <td>{{ rental.equipment.name }}</td>
+      <td>{{ rental.rental_date|date:"d.m.Y" }}</td>
+      <td>{{ rental.return_date|date:"d.m.Y" }}</td>
+      <td><span class="status-completed">⏱️ Ukończone</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Brak ukończonych wynajęć.</p>
+{% endif %}
+
+<h2 style="margin-top: 2rem">❌ Anulowane Wynajęcia</h2>
+{% if cancelled_rentals %}
+<table>
+  <thead>
+    <tr>
+      <th>Sprzęt</th>
+      <th>Data wynajmu</th>
+      <th>Data zwrotu</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rental in cancelled_rentals %}
+    <tr>
+      <td>{{ rental.equipment.name }}</td>
+      <td>{{ rental.rental_date|date:"d.m.Y" }}</td>
+      <td>{{ rental.return_date|date:"d.m.Y" }}</td>
+      <td><span class="status-cancelled">❌ Anulowane</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Brak anulowanych wynajęć.</p>
+{% endif %}
+
+<button type="button" class="btn powrot" onclick="window.location.href='{% url 'index' %}'">
+  ← Powrót do listy sprzętu
+</button>
+
+<style>
+  .powrot {
+    margin-top: 3rem;
+  }
+</style>
+{% endblock %}

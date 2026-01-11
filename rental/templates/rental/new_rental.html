@@ -1,0 +1,193 @@
+{% extends 'rental/base.html' %}
+
+{% block title %}Nowe Wynajęcie - Wypożyczalnia{% endblock %}
+
+{% block content %}
+<h1>➕ Nowe Wynajęcie</h1>
+
+{# Obsłuż oba warianty: error_messages (lista) albo error (string) #}
+{% if error_messages or error %}
+<div class="error">
+  <strong>Nie można utworzyć wynajęcia:</strong>
+  <ul style="margin: 0.5rem 0 0 1.25rem;">
+    {% if error_messages %}
+    {% for msg in error_messages %}
+    <li>{{ msg }}</li>
+    {% endfor %}
+    {% else %}
+    <li>{{ error }}</li>
+    {% endif %}
+  </ul>
+</div>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+
+  <label for="equipment_id">Wybierz sprzęt:</label>
+
+  {# Najważniejsze: template URL do endpointu (z ID=0 jako placeholder) #}
+  <select id="equipment_id" name="equipment_id" data-reserved-url-template="{% url 'equipment_reserved_ranges' 0 %}"
+    required>
+    <option value="">-- Wybierz sprzęt --</option>
+    {% for item in equipment %}
+    {% if item.is_available %}
+    <option value="{{ item.id }}">{{ item.name }} ({{ item.get_category_display }})</option>
+    {% endif %}
+    {% endfor %}
+  </select>
+
+  <label for="rental_date">Data wynajmu:</label>
+  <input type="text" id="rental_date" name="rental_date" required>
+
+  <label for="return_date">Data zwrotu:</label>
+  <input type="text" id="return_date" name="return_date" required>
+
+  <button type="submit">Wynajmij</button>
+</form>
+
+<button type="button" class="btn" onclick="window.location.href='{% url 'index' %}'">
+  ← Powrót do listy sprzętu
+</button>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+  .flatpickr-day.flatpickr-disabled {
+    background: #b0aeae;
+    border-color: #c4bcbc;
+    color: #000000;
+    opacity: 1;
+  }
+
+  .flatpickr-day.flatpickr-disabled:hover {
+    cursor: default;
+  }
+
+  .flatpickr-day.reserved-day {
+    background: #e74c3c;
+    border-color: #e74c3c;
+    color: #fff;
+    opacity: 1;
+  }
+
+  .btn {
+    margin-top: 3rem;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const equipmentSelect = document.getElementById("equipment_id");
+    const startInput = document.getElementById("rental_date");
+    const endInput = document.getElementById("return_date");
+
+    const today = "{{ today|date:'Y-m-d' }}" || null;
+
+    let reservedRanges = [];
+
+    function ymd(d) {
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+
+    function isReserved(dateObj) {
+      const x = ymd(dateObj);
+      return reservedRanges.some(r => r.from <= x && x <= r.to);
+    }
+
+    const fpStart = flatpickr(startInput, {
+      dateFormat: "Y-m-d",
+      minDate: today || "today",
+      disableMobile: true,
+      disable: [],
+      onDayCreate: function (dObj, dStr, fp, dayElem) {
+        if (isReserved(dayElem.dateObj)) {
+          dayElem.classList.add("reserved-day");
+          dayElem.title = "Sprzęt zajęty";
+        }
+      }
+    });
+
+    const fpEnd = flatpickr(endInput, {
+      dateFormat: "Y-m-d",
+      minDate: today || "today",
+      disableMobile: true,
+      disable: [],
+      onDayCreate: function (dObj, dStr, fp, dayElem) {
+        if (isReserved(dayElem.dateObj)) {
+          dayElem.classList.add("reserved-day");
+          dayElem.title = "Sprzęt zajęty";
+        }
+      }
+    });
+
+    // End date nie może być wcześniejszy niż start
+    fpStart.config.onChange.push((selectedDates, dateStr) => {
+      fpEnd.set("minDate", dateStr || (today || "today"));
+    });
+
+    function buildReservedUrl(equipmentId) {
+      const tpl = equipmentSelect.dataset.reservedUrlTemplate;
+      return tpl.replace("/0/", `/${equipmentId}/`);
+    }
+
+    async function loadReservedRanges(equipmentId) {
+      reservedRanges = [];
+
+      if (!equipmentId) {
+        fpStart.set("disable", []);
+        fpEnd.set("disable", []);
+        fpStart.redraw();
+        fpEnd.redraw();
+        return;
+      }
+
+      const url = buildReservedUrl(equipmentId);
+
+      let res;
+      try {
+        res = await fetch(url);
+      } catch (e) {
+        fpStart.set("disable", []);
+        fpEnd.set("disable", []);
+        fpStart.redraw();
+        fpEnd.redraw();
+        return;
+      }
+
+      if (!res.ok) {
+        fpStart.set("disable", []);
+        fpEnd.set("disable", []);
+        fpStart.redraw();
+        fpEnd.redraw();
+        return;
+      }
+
+      const data = await res.json();
+      reservedRanges = data.ranges || [];
+
+      fpStart.set("disable", reservedRanges);
+      fpEnd.set("disable", reservedRanges);
+
+      //  jeśli user miał już wybrane daty, a teraz są zajęte, wyczyść
+
+
+      fpStart.redraw();
+      fpEnd.redraw();
+    }
+
+    equipmentSelect.addEventListener("change", (e) => loadReservedRanges(e.target.value));
+
+    // Jeśli wchodzisz z linku typu /new_rental?equipment=ID, to od razu wybierz sprzęt
+    const params = new URLSearchParams(window.location.search);
+    const pre = params.get("equipment");
+    if (pre && !equipmentSelect.value) equipmentSelect.value = pre;
+
+    loadReservedRanges(equipmentSelect.value);
+  });
+</script>
+
+{% endblock %}

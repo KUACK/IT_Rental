@@ -1,0 +1,101 @@
+{% extends 'rental/base.html' %} 
+{% block title %}Panel Admina - Wypożyczalnia
+{%endblock %} {% block content %}
+<h1>📊 Panel Administratora</h1>
+
+<h2>🛠️ Sprzęt</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Nazwa</th>
+      <th>Kategoria</th>
+      <th>Opis</th>
+      <th>Dostępny</th>
+      <th>Akcja</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in equipment %}
+    <tr>
+      <td>{{ item.name }}</td>
+      <td>{{ item.get_category_display }}</td>
+      <td>{{ item.description }}</td>
+      <td id="status-{{ item.id }}">
+        {% if item.is_available %}
+        <span class="available">✅ Tak</span>
+        {% else %}
+        <span class="unavailable">❌ Nie</span>
+        {% endif %}
+      </td>
+      <td>
+        <button class="btn" data-equipment-id="{{ item.id }}" onclick="toggleAvailability(this.dataset.equipmentId)">Zmień status</button>
+
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2 style="margin-top: 2rem">📋 Wszystkie Wynajęcia</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Użytkownik</th>
+      <th>Sprzęt</th>
+      <th>Data wynajmu</th>
+      <th>Data zwrotu</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rental in rentals %}
+    <tr>
+      <td>{{ rental.user.username }}</td>
+      <td>{{ rental.equipment.name }}</td>
+      <td>{{ rental.rental_date|date:"d.m.Y" }}</td>
+      <td>{{ rental.return_date|date:"d.m.Y" }}</td>
+      <td>
+        {% if rental.status == 'active' %}
+        <span class="status-active">✅ Aktywne</span>
+        {% elif rental.status == 'completed' %}
+        <span class="status-completed">⏱️ Ukończone</span>
+        {% else %}
+        <span class="status-cancelled">❌ Anulowane</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p style="margin-top: 2rem">
+  <a href="{% url 'index' %}">← Powrót do strony głównej</a>
+</p>
+
+<script>
+function toggleAvailability(equipmentId) {
+    const csrftoken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch(`/admin/toggle-availability/${equipmentId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Błąd: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Błąd serwera');
+    });
+}
+</script>
+
+
+{% endblock %}
